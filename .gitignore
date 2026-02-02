@@ -14,3 +14,7 @@ third_party/strawberry_detector/Depth-Anything-V2/
 
 # auto-downloaded depth model repo
 third_party/strawberry_detector/Depth-Anything-V2/
+
+# local outputs & model caches
+results/
+third_party/strawberry_detector/checkpoints/

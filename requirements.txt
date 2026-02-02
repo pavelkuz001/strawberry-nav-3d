@@ -1,3 +1,4 @@
 numpy
 opencv-python
 networkx
+platformdirs>=4.0

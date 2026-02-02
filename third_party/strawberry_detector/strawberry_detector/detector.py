@@ -182,11 +182,12 @@ class StrawberryDetector:
         for det in detections:
             # Count by class (using actual YOLO model class names)
             class_name = det.get("class_name", "other").lower()
-            if "ripe" in class_name and "strawberry" in class_name:
-                # ripe_strawberry -> ripe
+            # NOTE: "ripe" is a substring of "unripe", so check "unripe" first
+            if "unripe" in class_name:
+                stats["total_unripe"] += 1
+            elif "ripe" in class_name:
                 stats["total_ripe"] += 1
-            elif class_name == "strawberry":
-                # strawberry (without ripe) -> unripe
+            elif class_name == "strawberry" or "strawberry" in class_name:
                 stats["total_unripe"] += 1
             else:
                 stats["total_other"] += 1
