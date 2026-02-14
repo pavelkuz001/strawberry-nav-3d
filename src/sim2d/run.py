@@ -7,7 +7,6 @@ from typing import Optional, Tuple
 import numpy as np
 
 from src.sim2d.config import Sim2DConfig, K_from_cfg
-from src.sim2d.motor_math import limit_vw
 from src.sim2d.motor_backend import SimMotorBackend
 from src.sim2d.geometry import pixel_depth_to_cam_xyz
 from src.sim2d.frames import cam_xyz_to_robot_xy, robot_xy_to_world_xy
@@ -197,8 +196,6 @@ def run(args) -> int:
 
     last_det = None
     state = "SEARCH"
-    v_prev = 0.0
-    w_prev = 0.0
     wheel_cmd = WheelCmd(0.0, 0.0)
 
     # visualization (optional)
@@ -258,9 +255,7 @@ def run(args) -> int:
                 if obs is None:
                     # rotate in place (motor-like limits)
                     v_des, w_des = 0.0, float(getattr(cfg, 'SEARCH_W', 0.8))
-                    v_cmd, w_cmd = limit_vw(v_des, w_des, v_prev, w_prev, dt=ctrl_period, cfg=cfg)
-                    v_prev, w_prev = v_cmd, w_cmd
-                    out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                    out = backend.set_cmd(v_des, w_des, ctrl_period)
                     wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
 
                 else:
@@ -270,8 +265,8 @@ def run(args) -> int:
                 if obs is None:
                     # lost target -> search
                     state = "SEARCH"
-                    v_cmd, w_cmd = 0.0, 0.8
-                    out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                    v_des, w_des = 0.0, float(getattr(cfg, "SEARCH_W", 0.8))
+                    out = backend.set_cmd(v_des, w_des, ctrl_period)
                     wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
 
                 else:
@@ -286,12 +281,9 @@ def run(args) -> int:
                     if dist <= float(cfg.STOP_RADIUS_M) + float(cfg.STOP_EPS_M):
                         state = "STOP"
                         wheel_cmd = WheelCmd(0.0, 0.0)
-                        v_prev, w_prev = 0.0, 0.0
                     else:
                         v_des, w_des = compute_control_to_goal(pose, goal_xy, cfg)
-                        v_cmd, w_cmd = limit_vw(v_des, w_des, v_prev, w_prev, dt=ctrl_period, cfg=cfg)
-                        v_prev, w_prev = v_cmd, w_cmd
-                        out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                        out = backend.set_cmd(v_des, w_des, ctrl_period)
                         wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
 
             if state == "STOP":
