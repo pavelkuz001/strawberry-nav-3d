@@ -8,6 +8,7 @@ import numpy as np
 
 from src.sim2d.config import Sim2DConfig, K_from_cfg
 from src.sim2d.motor_math import limit_vw
+from src.sim2d.motor_backend import SimMotorBackend
 from src.sim2d.geometry import pixel_depth_to_cam_xyz
 from src.sim2d.frames import cam_xyz_to_robot_xy, robot_xy_to_world_xy
 from src.sim2d.detector_sim import world_from_detector_json, simulate_detector_json
@@ -177,6 +178,8 @@ def run(args) -> int:
     pose = np.array([0.0, 0.0, 0.0], dtype=np.float32)
     pose0 = pose.copy()
 
+    backend = SimMotorBackend(cfg)
+
     world = world_from_detector_json(args.json, K, pose0)
 
     # detector timing
@@ -257,7 +260,9 @@ def run(args) -> int:
                     v_des, w_des = 0.0, float(getattr(cfg, 'SEARCH_W', 0.8))
                     v_cmd, w_cmd = limit_vw(v_des, w_des, v_prev, w_prev, dt=ctrl_period, cfg=cfg)
                     v_prev, w_prev = v_cmd, w_cmd
-                    wheel_cmd = vw_to_wheels(v_cmd, w_cmd, cfg)
+                    out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                    wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
+
                 else:
                     state = "APPROACH"
 
@@ -266,7 +271,9 @@ def run(args) -> int:
                     # lost target -> search
                     state = "SEARCH"
                     v_cmd, w_cmd = 0.0, 0.8
-                    wheel_cmd = vw_to_wheels(v_cmd, w_cmd, cfg)
+                    out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                    wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
+
                 else:
                     u, v, z, det_id = obs
                     goal_xy = obs_to_goal_world(u, v, z, pose, cfg, K)
@@ -284,10 +291,12 @@ def run(args) -> int:
                         v_des, w_des = compute_control_to_goal(pose, goal_xy, cfg)
                         v_cmd, w_cmd = limit_vw(v_des, w_des, v_prev, w_prev, dt=ctrl_period, cfg=cfg)
                         v_prev, w_prev = v_cmd, w_cmd
-                        wheel_cmd = vw_to_wheels(v_cmd, w_cmd, cfg)
+                        out = backend.set_cmd(v_cmd, w_cmd, ctrl_period)
+                        wheel_cmd = vw_to_wheels(out.v, out.w, cfg)
 
             if state == "STOP":
                 wheel_cmd = WheelCmd(0.0, 0.0)
+                backend.reset()
 
             next_ctrl_t += ctrl_period
 
