@@ -2,3 +2,4 @@ numpy
 opencv-python
 networkx
 platformdirs>=4.0
+# python -m strawberry_detector

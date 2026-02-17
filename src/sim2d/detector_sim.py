@@ -50,7 +50,7 @@ class WorldBerry:
     class_name: Optional[str] = None
 
 
-def world_from_detector_json(json_path: str, K: np.ndarray, pose0: np.ndarray) -> Dict[str, Any]:
+def world_from_detector_json(json_path: str, K: np.ndarray, pose0: np.ndarray, randomize_angle: bool = False) -> Dict[str, Any]:
     """
     One-time init:
       detector JSON (u,v,depth) @ pose0  -> fixed world points.
@@ -69,6 +69,14 @@ def world_from_detector_json(json_path: str, K: np.ndarray, pose0: np.ndarray) -
         u, v = uv
         xyz_cam = pixel_depth_to_cam_xyz(u, v, z, K)
         p_robot = cam_xyz_to_robot_xy(xyz_cam)          # (x_fwd, y_left)
+
+        if randomize_angle:
+            # Randomize angle while keeping the same distance
+            import random
+            dist = np.linalg.norm(p_robot)
+            angle = random.uniform(-np.pi, np.pi)
+            p_robot = np.array([dist * np.cos(angle), dist * np.sin(angle)], dtype=np.float32)
+
         p_world = robot_xy_to_world_xy(p_robot, pose0)  # (x,y)
 
         berries.append(

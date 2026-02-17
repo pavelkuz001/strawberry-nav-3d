@@ -11,9 +11,9 @@ from src.core.controller import follow_waypoints
 
 def main():
     # входные файлы (пока фиксированные для демо)
-    results_json = Path("results/strawberries_sample.json")
-    depth_path = Path("results/strawberries_sample_depth.npy")
-    masks_path = Path("results/strawberries_sample_masks_combined.npy")
+    results_json = Path("results/strawberry_in_green_house.json")
+    depth_path = Path("results/strawberry_in_green_house_depth.npy")
+    masks_path = Path("results/strawberry_in_green_house_masks_combined.npy")
 
     data = json.loads(results_json.read_text())
     depth = np.load(depth_path)
