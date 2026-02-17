@@ -63,6 +63,28 @@ GitHub Actions: install deps → compile → import smoke.
 
 ---
 
+## Запуск 2D симуляции
+
+Для запуска 2D симуляции (Sim2D), визуализирующей логику робота (Поиск -> Приближение -> Остановка):
+
+### Базовый запуск
+```bash
+python -m src.sim2d.run --json results/strawberry_in_green_house.json
+```
+
+### С рандомизацией положения клубники
+Используйте флаг `--random-angle`, чтобы рандомизировать угол положения клубники, сохраняя дистанцию:
+```bash
+python -m src.sim2d.run --json results/strawberry_in_green_house.json --random-angle
+```
+
+### Другие аргументы
+- `--headless`: Запуск без визуализации (только консоль).
+- `--steps N`: Установить максимальное количество шагов (по умолчанию 3000).
+- `--save-fig path/to/image.png`: Сохранить финальное состояние симуляции как изображение.
+
+---
+
 ## Quick start (CPU)
 
 ### 0) Prerequisites

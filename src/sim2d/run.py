@@ -184,7 +184,7 @@ def run(args) -> int:
     backend = make_motor_backend(cfg)
     print(f"motor_backend={cfg.MOTOR_BACKEND}")
 
-    world = world_from_detector_json(args.json, K, pose0)
+    world = world_from_detector_json(args.json, K, pose0, randomize_angle=getattr(args, "random_angle", False))
     pose[2] = float(getattr(args, "init_theta", 0.0))
 
     # detector timing
@@ -233,8 +233,18 @@ def run(args) -> int:
         txt = ax.text(0.02, 0.98, "", transform=ax.transAxes, va="top")
 
         ax.legend(loc="upper right")
-        ax.set_xlim(-1.0, 2.0)
-        ax.set_ylim(-1.5, 1.5)
+        # Calculate dynamic limits
+        min_x, max_x = -1.0, 2.0
+        min_y, max_y = -1.5, 1.5
+        
+        if bx and by:
+            min_x = min(min_x, min(bx) - 1.0)
+            max_x = max(max_x, max(bx) + 1.0)
+            min_y = min(min_y, min(by) - 1.0)
+            max_y = max(max_y, max(by) + 1.0)
+
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
 
         path_x, path_y = [], []
 
@@ -361,6 +371,7 @@ def main():
     ap.add_argument("--save-fig", default="", help="Save final matplotlib figure to path (e.g. results/sim2d.png)")
     ap.add_argument("--init-theta", type=float, default=0.0, help="Initial robot heading (rad)")
     ap.add_argument("--motor-backend", default=None, help="Override cfg.MOTOR_BACKEND (math/raw/ros-stub)")
+    ap.add_argument("--random-angle", action="store_true", help="Randomize strawberry angle on the same radius")
     args = ap.parse_args()
     raise SystemExit(run(args))
 
